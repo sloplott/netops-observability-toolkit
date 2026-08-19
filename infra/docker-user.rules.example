@@ -1,0 +1,34 @@
+# DOCKER-USER chain — filters ports PUBLISHED by containers.
+#
+# Container-published ports bypass the host firewall's input chain entirely.
+# Without these rules, anything the container publishes is open to the world
+# no matter how strict nftables looks.
+#
+# Order matters: RETURN (allow) must come before the matching DROP.
+# Persist with: netfilter-persistent save
+
+# ClickHouse 9000 — only the Grafana host
+iptables -I DOCKER-USER 1 -s <GRAFANA-IP>/32 -p tcp --dport 9000 -j RETURN
+iptables -A DOCKER-USER    -p tcp --dport 9000 -j DROP
+
+# Web console — internal ranges only
+iptables -A DOCKER-USER -s <INTERNAL-RANGE> -p tcp --dport 8081 -j RETURN
+iptables -A DOCKER-USER    -p tcp --dport 8081 -j DROP
+
+# Flow ingest: NetFlow 2055, IPFIX 4739, sFlow 6343
+#
+# These must match the flow packet's SOURCE address — the router's
+# "export source" / loopback — NOT its management IP. Loopbacks frequently
+# live in a range nobody remembered to allow, and the drop is silent.
+iptables -A DOCKER-USER -s <LOOPBACK-RANGE>  -p udp -m multiport --dports 2055,4739,6343 -j RETURN
+iptables -A DOCKER-USER -s <CUSTOMER-RANGE>  -p udp -m multiport --dports 2055,4739,6343 -j RETURN
+iptables -A DOCKER-USER    -p udp -m multiport --dports 2055,4739,6343 -j DROP
+
+# BMP
+iptables -A DOCKER-USER -s <LOOPBACK-RANGE> -p tcp --dport 10179 -j RETURN
+iptables -A DOCKER-USER    -p tcp --dport 10179 -j DROP
+
+# Optional: log before dropping, so you can see who is knocking.
+# Without it, a flood against the flow port is completely invisible.
+# iptables -I DOCKER-USER 1 -p udp -m multiport --dports 2055,4739,6343 \
+#     -m limit --limit 5/min -j LOG --log-prefix "docker-user-drop: "

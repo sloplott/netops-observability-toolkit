@@ -1,0 +1,472 @@
+{
+  "title": "02 - [FLOW] Aggregate by Exporter",
+  "uid": "netops-flow-02",
+  "tags": [
+    "akv-fluxo",
+    "flow"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "style": "dark",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "ds",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "grafana-clickhouse-datasource",
+        "current": {
+          "text": "${DS}",
+          "value": "P1809F7CD0C75ACF3"
+        },
+        "hide": 0
+      },
+      {
+        "name": "exporter",
+        "label": "Exportador",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${ds}"
+        },
+        "query": "SELECT DISTINCT ExporterName FROM default.flows_1m0s WHERE ExporterName != '' ORDER BY ExporterName",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": "",
+        "multi": true,
+        "current": {
+          "text": [],
+          "value": []
+        },
+        "hide": 0,
+        "options": []
+      },
+      {
+        "name": "inet",
+        "label": "INET",
+        "type": "custom",
+        "query": "Todos : 2048\\,34525, IPv4 : 2048, IPv6 : 34525",
+        "current": {
+          "text": "Todos",
+          "value": "2048,34525"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      },
+      {
+        "name": "topn",
+        "label": "Top N",
+        "type": "custom",
+        "query": "5,10,15,20",
+        "current": {
+          "text": "10",
+          "value": "10"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "TRÁFEGO TOTAL (BPS)",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#4FA3FF"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS \"Total\"\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\nGROUP BY time\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "PACOTES POR SEGUNDO (PPS)",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Packets * SamplingRate) / $__interval_s AS \"Total\"\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\nGROUP BY time\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "TRÁFEGO POR EXPORTADOR (BPS)",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  ExporterName AS metric,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\nGROUP BY time, metric\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "TOP $topn AS DE DESTINO (BPS)",
+      "description": "Para onde o tráfego sai. É o painel que fecha decisão de peering.",
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  concat('AS', toString(DstAS), ' ', dictGetOrDefault('default.asns', 'name', toUInt64(DstAS), '')) AS metric,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\n  AND DstAS IN (\n    SELECT DstAS FROM default.flows_1m0s\n    WHERE $__timeFilter(TimeReceived)\n      AND ExporterName IN ($exporter)\n      AND EType IN ($inet)\n    GROUP BY DstAS\n    ORDER BY sum(Bytes * SamplingRate) DESC\n    LIMIT $topn\n  )\nGROUP BY time, metric\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "TOP $topn AS DE ORIGEM (BPS)",
+      "description": "De onde o tráfego vem. Netflix, Google, Meta e caches aparecem aqui.",
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  concat('AS', toString(SrcAS), ' ', dictGetOrDefault('default.asns', 'name', toUInt64(SrcAS), '')) AS metric,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\n  AND SrcAS IN (\n    SELECT SrcAS FROM default.flows_1m0s\n    WHERE $__timeFilter(TimeReceived)\n      AND ExporterName IN ($exporter)\n      AND EType IN ($inet)\n    GROUP BY SrcAS\n    ORDER BY sum(Bytes * SamplingRate) DESC\n    LIMIT $topn\n  )\nGROUP BY time, metric\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "RESUMO POR EXPORTADOR",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Média (bps)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pico (bps)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Volume"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Média (bps)",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  ExporterName AS \"Exportador\",\n  ExporterAddress AS \"Endereço\",\n  sum(Bytes * SamplingRate) * 8 / ($__toTime - $__fromTime) AS \"Média (bps)\",\n  sum(Bytes * SamplingRate) AS \"Volume\",\n  count() AS \"Registros\"\nFROM default.flows_1m0s\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($exporter)\n  AND EType IN ($inet)\nGROUP BY ExporterName, ExporterAddress\nORDER BY \"Volume\" DESC"
+        }
+      ]
+    }
+  ],
+  "description": "Aggregate traffic per exporter and per AS."
+}

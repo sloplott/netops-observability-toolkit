@@ -1,0 +1,13 @@
+# audit output — contains real host and item names
+*report*.json
+*inventory*.json
+!dashboards/*.json
+
+# credentials
+.env
+*.token
+
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store

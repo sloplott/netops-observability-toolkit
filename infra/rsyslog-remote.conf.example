@@ -1,0 +1,41 @@
+# /etc/rsyslog.d/60-remote.conf
+#
+# Forward local logs to a central collector over TCP.
+#
+# THE POINT OF THIS FILE: syslog over TCP without a configured queue BLOCKS
+# the process writing the log when the collector becomes unreachable. On a
+# server doing real work — a flow collector, a database — that turns your
+# monitoring into an outage. The queue settings below are not optional.
+
+template(name="fmtRemote" type="string"
+  string="<%pri%>%timestamp:::date-rfc3164% %hostname% %syslogtag%%msg:::sp-if-no-1st-sp%%msg%\n")
+
+ruleset(name="rs_remote"
+        queue.type="LinkedList"
+        queue.filename="q_remote"            # enables the disk-assisted queue
+        queue.spoolDirectory="/var/spool/rsyslog"
+        queue.maxDiskSpace="512m"
+        queue.size="200000"
+        queue.highWatermark="150000"
+        queue.lowWatermark="50000"
+        queue.discardMark="190000"
+        queue.discardSeverity="6"            # shed info/debug first, keep warning+
+        queue.saveOnShutdown="on"
+        queue.dequeueBatchSize="1000"
+        queue.timeoutEnqueue="0") {          # never block the producer
+
+    action(type="omfwd"
+           target="<SYSLOG-COLLECTOR>"
+           port="<PORT>"
+           protocol="tcp"
+           template="fmtRemote"
+           action.resumeRetryCount="-1"      # retry forever, never give up
+           action.resumeInterval="10")
+}
+
+*.info;cron.none;mail.none  call rs_remote
+
+# Validate without applying:  rsyslogd -N1
+#
+# NOTE: inside an LXC container, imklog cannot read the kernel log. Firewall
+# and kernel messages will not appear here — collect those on the hypervisor.

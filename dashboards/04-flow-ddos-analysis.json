@@ -1,0 +1,1629 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "DDoS analysis over NetFlow. This is forensics and visibility, not detection: sampling (typically 1:100) and a one-minute active flow timeout mean small attacks are statistically invisible and everything lags by a minute or two. Keep a scrubbing appliance as the detector. Mean packet size, shown next to PPS, is the cheapest discriminator between a packet flood and an amplification attack.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "text",
+      "id": 301,
+      "title": "",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"text-align:center;padding:16px 0 6px;font-family:Inter,Helvetica,Arial,sans-serif\"><div style=\"font-size:38px;font-weight:800;letter-spacing:3px;color:#e9eef5;line-height:1\">DDoS &mdash; ANALYSIS</div><div style=\"margin-top:10px;font-size:12px;letter-spacing:5px;color:#8b98a9;text-transform:uppercase\">Traffic shape, targets and attack signature</div><div style=\"margin:15px auto 0;width:220px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(79,163,255,0),#4FA3FF,rgba(79,163,255,0))\"></div></div>",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "pluginVersion": "12.2.1",
+      "transparent": true
+    },
+    {
+      "type": "stat",
+      "id": 302,
+      "title": "PACOTES POR SEGUNDO",
+      "description": "PPS agregado. Em flood de pacote e este que sobe primeiro, antes da banda.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "unit": "pps",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#4FA3FF",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Packets * SamplingRate) / $__interval_s AS \"PPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "stat",
+      "id": 303,
+      "title": "TRAFEGO",
+      "description": "BPS agregado. Em amplificacao e este que estoura, com PPS relativamente baixo.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "unit": "bps",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#4FA3FF",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS \"BPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "stat",
+      "id": 304,
+      "title": "TAMANHO MEDIO DO PACOTE",
+      "description": "O discriminador mais barato que existe. Abaixo de ~100 B com PPS alto = flood de pacote. Pacote grande com poucas origens em porta de servico = amplificacao. Nao multiplicar por SamplingRate aqui: a amostragem se cancela na divisao.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "unit": "bytes",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 100
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 150
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Bytes) / nullIf(sum(Packets), 0) AS \"Bytes por pacote\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "stat",
+      "id": 305,
+      "title": "EXPORTADORES ATIVOS",
+      "description": "Nao respeita o filtro de Exportador de proposito. Se este numero cair, a analise inteira esta cega e nao ha alarme nenhum avisando.",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "unit": "none",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#4FA3FF",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  uniq(ExporterName) AS \"Exportadores\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "timeseries",
+      "id": 306,
+      "title": "PACOTES POR SEGUNDO (PPS)",
+      "description": "Leia junto com o painel ao lado: PPS subindo enquanto o tamanho do pacote despenca e a assinatura classica de flood.",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "pps",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Packets * SamplingRate) / $__interval_s AS \"PPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "timeseries",
+      "id": 307,
+      "title": "TAMANHO MEDIO DO PACOTE",
+      "description": "Queda brusca = chegou muito pacote pequeno. Subida com BPS alto = amplificacao.",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#F2CC0C",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "bytes",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  $__timeInterval(TimeReceived) AS time,\n  sum(Bytes) / nullIf(sum(Packets), 0) AS \"Bytes por pacote\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "text",
+      "id": 308,
+      "title": "",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"font-size:22px;text-align:center;letter-spacing:2px;text-shadow:1px 1px 2px #000;background-image:linear-gradient(90deg,#0b0e14 5%,#171b23 50%,#0b0e14 95%);color:#e9eef5;font-family:Helvetica,Arial,sans-serif;font-weight:700;padding:10px;border-radius:6px;border-bottom:2px solid #4FA3FF\">TARGETS</div>",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "pluginVersion": "12.2.1",
+      "transparent": true
+    },
+    {
+      "type": "timeseries",
+      "id": 309,
+      "title": "TOP $topn ALVOS POR PPS",
+      "description": "Alvo que descola do resto em PPS e o candidato. Confira o tamanho do pacote dele na tabela ao lado.",
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "unit": "pps",
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "WITH top AS (\n  SELECT DstAddr\n  FROM default.flows\n  WHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  GROUP BY DstAddr\n  ORDER BY sum(Packets * SamplingRate) DESC\n  LIMIT $topn\n)\nSELECT\n  $__timeInterval(f.TimeReceived) AS time,\n  replaceRegexpOne(IPv6NumToString(f.DstAddr), '^::ffff:', '') AS metric,\n  sum(f.Packets * f.SamplingRate) / $__interval_s AS pps\nFROM default.flows AS f\nINNER JOIN top USING (DstAddr)\nWHERE $__timeFilter(f.TimeReceived)\n  AND f.ExporterName IN ($host)\n  AND f.EType IN ($inet)\nGROUP BY time, metric\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "table",
+      "id": 310,
+      "title": "ALVOS AGORA",
+      "description": "Muitas origens + pacote grande + crescimento suave costuma ser evento legitimo (jogo, atualizacao, live). Blackhole ai derruba cliente pagante.",
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "alvo"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 190
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "pps"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tam_pacote"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 100
+                    },
+                    {
+                      "color": "semi-dark-green",
+                      "value": 150
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "origens"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "portas_origem"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') AS alvo,\n  sum(Packets * SamplingRate) / $__interval_s AS pps,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps,\n  sum(Bytes) / nullIf(sum(Packets), 0) AS tam_pacote,\n  uniqExact(SrcAddr) AS origens,\n  uniqExact(SrcPort) AS portas_origem\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\nGROUP BY alvo\nORDER BY pps DESC\nLIMIT $topn",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "text",
+      "id": 311,
+      "title": "",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"font-size:22px;text-align:center;letter-spacing:2px;text-shadow:1px 1px 2px #000;background-image:linear-gradient(90deg,#0b0e14 5%,#171b23 50%,#0b0e14 95%);color:#e9eef5;font-family:Helvetica,Arial,sans-serif;font-weight:700;padding:10px;border-radius:6px;border-bottom:2px solid #4FA3FF\">SIGNATURE &mdash; ORIGIN</div>",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "pluginVersion": "12.2.1",
+      "transparent": true
+    },
+    {
+      "type": "table",
+      "id": 312,
+      "title": "PORTAS DE ORIGEM (reflexao / amplificacao)",
+      "description": "Porta de origem 53 (DNS), 123 (NTP), 161 (SNMP), 389 (LDAP), 1900 (SSDP), 11211 (memcached), 19 (chargen), 111 (portmap) no topo = reflexao. Use o campo Alvo la em cima para focar num IP.",
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "porta_origem"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "proto"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "origens"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fluxos"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tam_pacote"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  SrcPort AS porta_origem,\n  multiIf(Proto = 6, 'TCP', Proto = 17, 'UDP', Proto = 1, 'ICMP', toString(Proto)) AS proto,\n  uniqExact(SrcAddr) AS origens,\n  count() AS fluxos,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps,\n  sum(Bytes) / nullIf(sum(Packets), 0) AS tam_pacote\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY porta_origem, proto\nORDER BY bps DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "table",
+      "id": 313,
+      "title": "ORIGEM POR ASN E ENTRADA",
+      "description": "Responde 'por qual borda entrou' e 'qual upstream esta me entregando o ataque'.",
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "asn_origem"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "pps"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "origens"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  SrcAS AS asn_origem,\n  ExporterName AS exportador,\n  InIfName AS interface_entrada,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps,\n  sum(Packets * SamplingRate) / $__interval_s AS pps,\n  uniqExact(SrcAddr) AS origens\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$alvo' = '' OR replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') = '$alvo')\nGROUP BY asn_origem, exportador, interface_entrada\nORDER BY bps DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "text",
+      "id": 314,
+      "title": "",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"font-size:22px;text-align:center;letter-spacing:2px;text-shadow:1px 1px 2px #000;background-image:linear-gradient(90deg,#0b0e14 5%,#171b23 50%,#0b0e14 95%);color:#e9eef5;font-family:Helvetica,Arial,sans-serif;font-weight:700;padding:10px;border-radius:6px;border-bottom:2px solid #4FA3FF\">COLLECTION HEALTH</div>",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "pluginVersion": "12.2.1",
+      "transparent": true
+    },
+    {
+      "type": "table",
+      "id": 315,
+      "title": "ULTIMO FLOW POR EXPORTADOR",
+      "description": "Exportador que sumiu desta lista esta mudo. Um painel de DDoS sem flow fica verde para sempre. Quando o flow some e o cliente esta online, verifique nesta ordem: exportacao parada no roteador, mudanca de sampling, blackhole ativo, rota assimetrica.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "exportador"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 240
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "silencio_s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "semi-dark-green",
+                      "value": null
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 180
+                    },
+                    {
+                      "color": "red",
+                      "value": 600
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fluxos_na_janela"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  ExporterName AS exportador,\n  max(TimeReceived) AS ultimo_flow,\n  dateDiff('second', max(TimeReceived), now()) AS silencio_s,\n  count() AS fluxos_na_janela\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY exportador\nORDER BY silencio_s DESC",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    },
+    {
+      "type": "table",
+      "id": 316,
+      "title": "ENCAMINHADO x DESCARTADO",
+      "description": "Pico de DESCARTADO aponta ACL, uRPF ou blackhole em acao - inclusive blackhole que ficou de pe depois que o ataque acabou, que e a causa mais comum de 'voltou tudo menos esse cliente'.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "Sem dados",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "exportador"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 220
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "DESCARTADO": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "encaminhado": {
+                        "color": "semi-dark-green",
+                        "index": 1
+                      },
+                      "consumido": {
+                        "color": "text",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pacotes"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bps"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bps"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  ExporterName AS exportador,\n  multiIf(ForwardingStatus >= 192, 'consumido',\n          ForwardingStatus >= 128, 'DESCARTADO',\n          ForwardingStatus >= 64,  'encaminhado', 'desconhecido') AS status,\n  sum(Packets * SamplingRate) AS pacotes,\n  sum(Bytes * SamplingRate) * 8 / $__interval_s AS bps\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\nGROUP BY exportador, status\nORDER BY pacotes DESC\nLIMIT 30",
+          "refId": "A"
+        }
+      ],
+      "transparent": true
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": [
+    "akv-ddos",
+    "flow",
+    "ddos",
+    "ACME"
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "ds",
+        "label": "Datasource",
+        "query": "grafana-clickhouse-datasource",
+        "current": {
+          "text": "${DS}",
+          "value": "P1809F7CD0C75ACF3"
+        },
+        "options": [],
+        "refresh": 1,
+        "hide": 2
+      },
+      {
+        "type": "query",
+        "name": "host",
+        "label": "Exportador",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${ds}"
+        },
+        "query": "SELECT DISTINCT ExporterName FROM default.flows_1m0s WHERE ExporterName != '' ORDER BY ExporterName",
+        "current": {
+          "text": [],
+          "value": []
+        },
+        "options": [],
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0
+      },
+      {
+        "type": "custom",
+        "name": "inet",
+        "label": "INET",
+        "query": "Todos : 2048\\,34525, IPv4 : 2048, IPv6 : 34525",
+        "current": {
+          "text": "Todos",
+          "value": "2048,34525"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "Todos",
+            "value": "2048,34525"
+          },
+          {
+            "selected": false,
+            "text": "IPv4",
+            "value": "2048"
+          },
+          {
+            "selected": false,
+            "text": "IPv6",
+            "value": "34525"
+          }
+        ],
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "type": "textbox",
+        "name": "alvo",
+        "label": "Alvo (IP)",
+        "description": "Deixe vazio para ver a rede toda. Preencha com o IP do alvo para focar a analise nele.",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": [],
+        "hide": 0
+      },
+      {
+        "type": "custom",
+        "name": "topn",
+        "label": "Top N",
+        "query": "5,10,15,20",
+        "current": {
+          "text": "10",
+          "value": "10"
+        },
+        "options": [
+          {
+            "selected": false,
+            "text": "5",
+            "value": "5"
+          },
+          {
+            "selected": true,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "15",
+            "value": "15"
+          },
+          {
+            "selected": false,
+            "text": "20",
+            "value": "20"
+          }
+        ],
+        "includeAll": false,
+        "hide": 0
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "04 - [FLOW] DDoS Analysis",
+  "uid": "netops-flow-04"
+}

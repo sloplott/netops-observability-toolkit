@@ -1,0 +1,13 @@
+# /etc/sysctl.d/99-flow-collector.conf
+#
+# A flow collector drops packets SILENTLY when the socket buffer fills.
+# The Linux default (208 KB) is small for ISP-rate NetFlow, and the symptom
+# is "some flows are missing sometimes" — which is nearly impossible to
+# diagnose from the application side.
+#
+# IMPORTANT: apply on the HYPERVISOR, not inside the container.
+# net.core.* is not namespaced; inside an LXC container you get "cannot stat".
+
+net.core.rmem_max = 67108864
+net.core.rmem_default = 33554432
+net.core.netdev_max_backlog = 30000

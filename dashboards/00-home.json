@@ -1,0 +1,692 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"text-align:center;padding:18px 0 6px\"><div style=\"font-size:46px;font-weight:800;letter-spacing:3px;color:#e9eef5;line-height:1\">NET<span style=\"color:#4FA3FF\">OPS</span></div><div style=\"margin-top:10px;font-size:12px;letter-spacing:5px;color:#8b98a9;text-transform:uppercase\">Traffic and peering analysis</div><div style=\"margin:16px auto 0;width:220px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(79,163,255,0),#4FA3FF,rgba(79,163,255,0))\"></div></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "noValue": "SEM DADO",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
+      "hideTimeOverride": true,
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfMinute(TimeReceived) AS time,\n  sum(Bytes * SamplingRate) * 8 / 60 AS \"BPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "15m",
+      "title": "TRÁFEGO AGORA",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#199e70",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "SEM DADO",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "pps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "hideTimeOverride": true,
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfMinute(TimeReceived) AS time,\n  sum(Packets * SamplingRate) / 60 AS \"PPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "15m",
+      "title": "PACOTES POR SEGUNDO",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e9eef5",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "SEM DADO",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 5
+      },
+      "hideTimeOverride": true,
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfMinute(TimeReceived) AS time,\n  uniqExact(ExporterName) AS \"EXPORTADORES\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "15m",
+      "title": "EXPORTADORES ATIVOS",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "noValue": "SEM DADO",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0ca30c",
+                "value": null
+              },
+              {
+                "color": "#fab219",
+                "value": 180
+              },
+              {
+                "color": "#d03b3b",
+                "value": 600
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "SELECT\n  if(count() = 0, NULL,\n     dateDiff('second', max(TimeReceived), now())) AS \"SEGUNDOS\"\nFROM default.flows\nWHERE TimeReceived > now() - INTERVAL 6 HOUR",
+          "refId": "A"
+        }
+      ],
+      "title": "ÚLTIMO FLOW RECEBIDO",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#4FA3FF",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 22,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "mappings": [],
+          "min": 0,
+          "noValue": "SEM DADO",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "hideTimeOverride": true,
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfMinute(TimeReceived) AS time,\n  sum(Bytes * SamplingRate) * 8 / 60 AS \"BPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\nGROUP BY time\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "6h",
+      "title": "TRÁFEGO TOTAL — ÚLTIMAS 6 HORAS",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 11,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">01</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">FLUXO E EXPORTADORES</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Vis&atilde;o geral e conversas</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-flow-02\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">02</span> &nbsp;AGREGADO</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Total por roteador e por AS</div></a><a href=\"/d/netops-flow-03\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">03</span> &nbsp;CONVERSAS</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Top talkers origem &rarr; destino</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      },
+      "id": 12,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">02</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">INTERFACES E UPSTREAMS</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Tr&acirc;nsito, PNI e IX</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><div style=\"border:1px dashed #28303d;border-radius:9px;padding:11px 13px;margin-bottom:9px;text-align:center\"><span style=\"color:#5f6b7a;font-size:11px;letter-spacing:1.5px\">EM BREVE</span></div></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 12,
+        "y": 16
+      },
+      "id": 13,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">03</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">PROTOCOLOS E APLICA&Ccedil;&Otilde;ES</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Portas e servi&ccedil;os</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-flow-01\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">01</span> &nbsp;PORTAS</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">BPS e PPS por porta</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 16
+      },
+      "id": 14,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">04</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">SEGURAN&Ccedil;A E ANOMALIAS</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">DDoS, origem e assinatura</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-flow-04\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">04</span> &nbsp;AN&Aacute;LISE DE DDoS</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Alvos, assinatura e sa&uacute;de da coleta</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 20,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"text-align:center;padding:14px 0 2px\"><div style=\"font-size:22px;font-weight:800;letter-spacing:3px;color:#e9eef5;line-height:1\">SWITCHES AND ROUTERS</div><div style=\"margin-top:9px;font-size:11px;letter-spacing:4px;color:#8b98a9;text-transform:uppercase\">Monitoring by vendor</div><div style=\"margin:13px auto 0;width:220px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(79,163,255,0),#4FA3FF,rgba(79,163,255,0))\"></div></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 0,
+        "y": 28
+      },
+      "id": 21,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">05</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">SWITCHES HUAWEI</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Sa&uacute;de, interfaces e &oacute;ptico</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-huawei-mpls\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">01</span> &nbsp;VIS&Atilde;O GERAL</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Ping, CPU, tr&aacute;fego e sinal do SFP</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 6,
+        "y": 28
+      },
+      "id": 22,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">06</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">SWITCHES DATACOM</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Linha DM4XXX</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><div style=\"border:1px dashed #28303d;border-radius:9px;padding:11px 13px;margin-bottom:9px;text-align:center\"><span style=\"color:#5f6b7a;font-size:11px;letter-spacing:1.5px\">EM BREVE</span></div></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 12,
+        "y": 28
+      },
+      "id": 23,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">07</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">MIKROTIK</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">Roteadores de borda e BGP</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-mikrotik-bras\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">01</span> &nbsp;MIKROTIK BRAS</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Sess&otilde;es, sa&uacute;de, interfaces e &oacute;ptico</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 28
+      },
+      "id": 24,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"height:100%;box-sizing:border-box;background:linear-gradient(160deg,#171b23 0%,#12151b 100%);border:1px solid #232a35;border-radius:14px;padding:16px 15px;box-shadow:0 10px 28px rgba(0,0,0,.40)\"><div style=\"display:flex;align-items:center;gap:11px\"><div style=\"width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,#4FA3FF,#1D6FD0);color:#fff;font-size:13px;font-weight:800;line-height:32px;text-align:center\">08</div><div style=\"color:#e9eef5;font-size:14px;font-weight:700;letter-spacing:.4px;line-height:1.15\">OLT E ACESSO</div></div><div style=\"color:#8b98a9;font-size:11px;margin:7px 0 13px 43px\">PON, placas e ONUs por porta</div><div style=\"height:1px;margin-bottom:13px;background:linear-gradient(90deg,#4FA3FF,rgba(79,163,255,0))\"></div><a href=\"/d/netops-olt-01\" style=\"display:block;text-decoration:none;background:#1b202a;border:1px solid #28303d;border-left:3px solid #4FA3FF;border-radius:9px;padding:11px 13px;margin-bottom:9px\"><div style=\"color:#e9eef5;font-size:13px;font-weight:700;letter-spacing:.3px\"><span style=\"color:#4FA3FF\">05</span> &nbsp;OLT HUAWEI E FIBERHOME</div><div style=\"color:#8b98a9;font-size:11px;margin-top:3px\">Placas, ONUs por PON e interfaces</div></a></div>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.2.1",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 42,
+  "tags": [
+    "base-central",
+    "home"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "hidden": true,
+    "refresh_intervals": []
+  },
+  "timezone": "browser",
+  "title": "00 - [HOME] Network Operations",
+  "uid": "netops-home",
+  "description": "Landing page. Links to the flow analytics dashboards and to the per-vendor equipment dashboards."
+}

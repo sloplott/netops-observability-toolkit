@@ -1,0 +1,785 @@
+{
+  "title": "03 - [FLOW] Top Talkers",
+  "uid": "netops-flow-03",
+  "tags": [
+    "akv-fluxo",
+    "flow",
+    "conversas"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "style": "dark",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "description": "Top talkers — source to destination conversations.",
+  "templating": {
+    "list": [
+      {
+        "name": "ds",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "grafana-clickhouse-datasource",
+        "current": {
+          "text": "${DS}",
+          "value": "P1809F7CD0C75ACF3"
+        },
+        "hide": 0
+      },
+      {
+        "name": "host",
+        "label": "Exportador",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${ds}"
+        },
+        "query": "SELECT DISTINCT ExporterName FROM default.flows_1m0s WHERE ExporterName != '' ORDER BY ExporterName",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": [],
+          "value": []
+        },
+        "sort": 1,
+        "hide": 0,
+        "options": []
+      },
+      {
+        "name": "inet",
+        "label": "INET",
+        "type": "custom",
+        "query": "Todos : 2048\\,34525, IPv4 : 2048, IPv6 : 34525",
+        "current": {
+          "text": "Todos",
+          "value": "2048,34525"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      },
+      {
+        "name": "ip",
+        "label": "Filtrar IP (contem)",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0
+      },
+      {
+        "name": "porta",
+        "label": "Filtrar porta",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0
+      },
+      {
+        "name": "bucket",
+        "label": "Granularidade (s)",
+        "type": "custom",
+        "query": "10,30,60,300",
+        "current": {
+          "text": "60",
+          "value": "60"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      },
+      {
+        "name": "topn",
+        "label": "Top N",
+        "type": "custom",
+        "query": "10,20,50,100,200",
+        "current": {
+          "text": "50",
+          "value": "50"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 100,
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"text-align:center;padding:10px 0 2px\"><div style=\"font-size:26px;font-weight:800;letter-spacing:1.5px;color:#e9eef5\">TOP TALKERS <span style=\"font-weight:300;color:#8b98a9\">·</span> <span style=\"color:#4FA3FF\">CONVERSAS</span></div><div style=\"position:relative;margin-top:12px;height:2px;background:#4FA3FF;border-radius:2px\"><span style=\"position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#4FA3FF;box-shadow:0 0 0 3px #111217\"></span></div></div>"
+      }
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "TRÁFEGO TOTAL",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#4FA3FF"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "area",
+        "colorMode": "value",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS time,\n  sum(Bytes * SamplingRate) * 8 / $bucket AS \"BPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n  AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\nGROUP BY time\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "PACOTES POR SEGUNDO",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "area",
+        "colorMode": "value",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS time,\n  sum(Packets * SamplingRate) / $bucket AS \"PPS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n  AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\nGROUP BY time\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "CONVERSAS ATIVAS",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "area",
+        "colorMode": "value",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS time,\n  uniqExact((SrcAddr, SrcPort, DstAddr, DstPort)) AS \"CONVERSAS\"\nFROM default.flows\nWHERE $__timeFilter(TimeReceived)\n  AND ExporterName IN ($host)\n  AND EType IN ($inet)\n  AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n  AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\nGROUP BY time\nORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "TOP $topn CONVERSAS",
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "decimals": 2,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "conversa"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CONVERSA"
+              },
+              {
+                "id": "unit",
+                "value": "string"
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 520
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "maximo"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÁXIMO"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-BlPu"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "media"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÉDIA"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "atual"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ATUAL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pps_max"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "PPS MÁX"
+              },
+              {
+                "id": "unit",
+                "value": "pps"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "MÁXIMO",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "WITH b AS (\n  SELECT\n    toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS t,\n    concat(\n      replaceRegexpOne(IPv6NumToString(SrcAddr), '^::ffff:', ''), ':', toString(SrcPort),\n      '  -->  ',\n      replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', ''), ':', toString(DstPort)\n    ) AS conversa,\n    sum(Bytes * SamplingRate) * 8 / $bucket AS bps,\n    sum(Packets * SamplingRate) / $bucket AS pps\n  FROM default.flows\n  WHERE $__timeFilter(TimeReceived)\n    AND ExporterName IN ($host)\n    AND EType IN ($inet)\n    AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n    AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\n  GROUP BY t, conversa\n)\nSELECT\n  conversa,\n  max(bps)       AS maximo,\n  avg(bps)       AS media,\n  argMax(bps, t) AS atual,\n  max(pps)       AS pps_max\nFROM b\nGROUP BY conversa\nORDER BY maximo DESC\nLIMIT $topn"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "TOP $topn ORIGENS",
+      "gridPos": {
+        "h": 14,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "decimals": 2,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "origem"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ORIGEM"
+              },
+              {
+                "id": "unit",
+                "value": "string"
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 260
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "maximo"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÁXIMO"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-BlPu"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "media"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÉDIA"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "atual"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ATUAL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "destinos"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "DESTINOS DISTINTOS"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 200
+                    },
+                    {
+                      "color": "red",
+                      "value": 1000
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "MÁXIMO",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "WITH b AS (\n  SELECT\n    toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS t,\n    replaceRegexpOne(IPv6NumToString(SrcAddr), '^::ffff:', '') AS origem,\n    sum(Bytes * SamplingRate) * 8 / $bucket AS bps,\n    uniqExact(DstAddr) AS d\n  FROM default.flows\n  WHERE $__timeFilter(TimeReceived)\n    AND ExporterName IN ($host)\n    AND EType IN ($inet)\n    AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n    AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\n  GROUP BY t, origem\n)\nSELECT\n  origem,\n  max(bps)       AS maximo,\n  avg(bps)       AS media,\n  argMax(bps, t) AS atual,\n  max(d)         AS destinos\nFROM b\nGROUP BY origem\nORDER BY maximo DESC\nLIMIT $topn"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "TOP $topn DESTINOS",
+      "gridPos": {
+        "h": 14,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "decimals": 2,
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "destino"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "DESTINO"
+              },
+              {
+                "id": "unit",
+                "value": "string"
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.width",
+                "value": 260
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "maximo"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÁXIMO"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "media"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MÉDIA"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "atual"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ATUAL"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "origens"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "ORIGENS DISTINTAS"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 200
+                    },
+                    {
+                      "color": "red",
+                      "value": 1000
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "MÁXIMO",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${ds}"
+          },
+          "editorType": "sql",
+          "format": 2,
+          "queryType": "table",
+          "rawSql": "WITH b AS (\n  SELECT\n    toStartOfInterval(TimeReceived, INTERVAL $bucket second) AS t,\n    replaceRegexpOne(IPv6NumToString(DstAddr), '^::ffff:', '') AS destino,\n    sum(Bytes * SamplingRate) * 8 / $bucket AS bps,\n    uniqExact(SrcAddr) AS s\n  FROM default.flows\n  WHERE $__timeFilter(TimeReceived)\n    AND ExporterName IN ($host)\n    AND EType IN ($inet)\n    AND ('$ip' = '' OR position(IPv6NumToString(SrcAddr), '$ip') > 0 OR position(IPv6NumToString(DstAddr), '$ip') > 0)\n    AND ('$porta' = '' OR toString(SrcPort) = '$porta' OR toString(DstPort) = '$porta')\n  GROUP BY t, destino\n)\nSELECT\n  destino,\n  max(bps)       AS maximo,\n  avg(bps)       AS media,\n  argMax(bps, t) AS atual,\n  max(s)         AS origens\nFROM b\nGROUP BY destino\nORDER BY maximo DESC\nLIMIT $topn"
+        }
+      ]
+    }
+  ]
+}

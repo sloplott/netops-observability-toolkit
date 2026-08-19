@@ -38,11 +38,12 @@ dashboard, using the scripts in `scripts/`.
 ## Repository layout
 
 ```
-scripts/     zbx_audit.py       audit a dashboard's regexes against Zabbix
-             zbx_inventory.py   inventory hosts, find duplicates and orphans
-dashboards/  Grafana 12 JSON — flow analytics, DDoS, MPLS, BRAS, GPON OLT
-docs/        method and runbooks
-infra/       flow-collector examples: nftables, DOCKER-USER, rsyslog, sysctl
+infra/                  flow-collector examples: nftables, DOCKER-USER, rsyslog, sysctl
+docs/                   Method and runbooks
+dashboards/             Grafana 12 JSON — flow analytics, DDoS, MPLS, BRAS, GPON OLT
+scripts/
+├── zbx_audit.py        audit a dashboard's regexes against Zabbix
+└── zbx_inventory.py    inventory hosts, find duplicates and orphans
 ```
 
 ---
